@@ -1,17 +1,17 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'firebase/auth';
-import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from 'firebase/firestore';
-
-// 🔥 TU CONFIGURACIÓN DE FIREBASE
+// Configuración de Firebase (TUYA)
 const firebaseConfig = {
-  apiKey: "AIzaSyDFOcDXD64IQZ2RiHpxx6IFX4E9UCJhDjU",
+  apiKey: "AIzaSyDFOcDXD64IQZ2RiRhpx0IfX4E9UCJhDjU",
   authDomain: "gimnasio-63bdd.firebaseapp.com",
   projectId: "gimnasio-63bdd",
   storageBucket: "gimnasio-63bdd.firebasestorage.app",
   messagingSenderId: "184489602937",
-  appId: "1:184489602937:web:b03e0e0198da9f3392589a8",
-  measurementId: "G-YVLJS83VFN"
+  appId: "1:184489602937:web:03e0e0198da9f3392589a8",
+  measurementId: "G-YVLJSB3VFN"
 };
+// Importar Firebase (usando CDN)
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js';
+import { getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 // Inicializar Firebase
 const app = initializeApp(firebaseConfig);
@@ -24,40 +24,25 @@ const tasksSection = document.getElementById('tasks-section');
 const tasksList = document.getElementById('tasks-list');
 const userEmailSpan = document.getElementById('user-email');
 
-// ✅ ESCUCHAR CAMBIOS EN EL ESTADO DE AUTENTICACIÓN
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    authSection.style.display = 'none';
-    tasksSection.style.display = 'block';
-    if (userEmailSpan) {
-      userEmailSpan.innerHTML = `✅ Bienvenido, <strong>${user.email}</strong>`;
-    }
-    loadTasks();
-    console.log('Usuario logueado:', user.email);
-  } else {
-    authSection.style.display = 'block';
-    tasksSection.style.display = 'none';
-    console.log('Usuario no logueado');
-  }
-});
+// ========== FUNCIONES GLOBALES (window) ==========
+// Se asignan explícitamente a window para que funcionen desde onclick
 
-// 📝 FUNCIONES DE AUTENTICACIÓN
 window.signUp = async () => {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
-  
+
   if (!email || !password) {
     alert('❌ Por favor, completa todos los campos');
     return;
   }
-  
+
   if (password.length < 6) {
     alert('❌ La contraseña debe tener al menos 6 caracteres');
     return;
   }
-  
+
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await createUserWithEmailAndPassword(auth, email, password);
     alert('✅ ¡Registro exitoso! Bienvenido/a');
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
@@ -77,14 +62,14 @@ window.signUp = async () => {
 window.signIn = async () => {
   const email = document.getElementById('email').value;
   const password = document.getElementById('password').value;
-  
+
   if (!email || !password) {
     alert('❌ Por favor, completa todos los campos');
     return;
   }
-  
+
   try {
-    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    await signInWithEmailAndPassword(auth, email, password);
     alert('✅ ¡Bienvenido/a de vuelta!');
     document.getElementById('email').value = '';
     document.getElementById('password').value = '';
@@ -110,16 +95,15 @@ window.signOut = async () => {
   }
 };
 
-// 📝 FUNCIONES CRUD PARA RUTINAS
 window.addTask = async () => {
   const taskInput = document.getElementById('task-input');
   const taskText = taskInput.value.trim();
-  
+
   if (taskText === '') {
     alert('❌ Por favor, escribe una rutina de ejercicio');
     return;
   }
-  
+
   try {
     const user = auth.currentUser;
     await addDoc(collection(db, 'rutinas'), {
@@ -146,17 +130,35 @@ window.deleteTask = async (taskId) => {
   }
 };
 
+// ========== ESTADO DE AUTENTICACIÓN ==========
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    authSection.style.display = 'none';
+    tasksSection.style.display = 'block';
+    if (userEmailSpan) {
+      userEmailSpan.innerHTML = `✅ Bienvenido, <strong>${user.email}</strong>`;
+    }
+    loadTasks(); // Cargar rutinas en tiempo real
+    console.log('Usuario logueado:', user.email);
+  } else {
+    authSection.style.display = 'block';
+    tasksSection.style.display = 'none';
+    console.log('Usuario no logueado');
+  }
+});
+
+// ========== FUNCIÓN PARA CARGAR RUTINAS EN TIEMPO REAL ==========
 function loadTasks() {
   const user = auth.currentUser;
   if (!user) return;
-  
+
   tasksList.innerHTML = '<div class="loading">Cargando tus rutinas...</div>';
-  
+
   const q = collection(db, 'rutinas');
   onSnapshot(q, (snapshot) => {
     tasksList.innerHTML = '';
     let tieneRutinas = false;
-    
+
     snapshot.forEach((docu) => {
       const rutina = docu.data();
       if (rutina.userId === user.uid) {
@@ -170,7 +172,7 @@ function loadTasks() {
         tasksList.appendChild(taskDiv);
       }
     });
-    
+
     if (!tieneRutinas) {
       tasksList.innerHTML = '<div class="loading">📋 No tienes rutinas aún. ¡Agrega tu primera rutina!</div>';
     }
